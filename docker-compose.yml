@@ -1,0 +1,56 @@
+version: '2.4'
+
+services:
+  # microservicios
+  ms-send-message:
+    container_name: ms-send-message
+    build:
+      context: ./ms-send-message
+      dockerfile: Dockerfile
+      target: microservices
+
+    environment:
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY?${AWS_SECRET_KEY}
+      - AWS_SQS_NAME=${AWS_SQS_NAME}
+      - AWS_REGION=${AWS_REGION}
+
+    ports:
+      - "8081:8081"
+    networks:
+      - ms-sqs-circuit
+
+
+  ms-received-message:
+    container_name: ms-received-message
+    build:
+      context: ./ms-received-message
+      dockerfile: Dockerfile
+      target: microservices
+
+    environment:
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY?${AWS_SECRET_KEY}
+      - AWS_SQS_NAME=${AWS_SQS_NAME}
+      - AWS_REGION=${AWS_REGION}
+
+    ports:
+      - "8089:8081"
+    networks:
+      - ms-sqs-circuit
+
+    depends_on:
+      - mongo-container
+
+  mongo-container:
+    image: mongo:latest
+    container_name: "mongo-container"
+    ports:
+      - "27017:27017"
+    networks:
+      - ms-sqs-circuit
+
+networks:
+  ms-sqs-circuit:
+    driver: bridge
+
